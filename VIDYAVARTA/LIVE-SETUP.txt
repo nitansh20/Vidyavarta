@@ -1,0 +1,230 @@
+# VidyaVarta - Live Email and Google Classroom Setup Guide
+
+Plain-English setup for the two real integrations. Read Part 0 first - it
+explains which version of VidyaVarta can go live, because the wrong start
+here wastes an evening.
+
+---
+
+## Part 0 - WHICH folder and which Node (important)
+
+Work inside the VidyaVarta SOURCE folder - the one that has
+package.json inside. Check with:  dir package.json
+
+(Older builds also had a double-click ready package called
+START-VIDYAVARTA.cmd. It was the same live app; this guide does not use
+it. Version 1 downloads are the source folder only.)
+
+### One-time setup (Windows)
+
+1. Open PowerShell inside the VidyaVarta folder.
+2. Your existing Node.js 24 works as-is (and Node 22 LTS also works).
+   No second Node installation is needed.
+3. Install once (internet required):
+
+```powershell
+npm ci --ignore-scripts
+npm rebuild better-sqlite3
+```
+
+4. Start live:
+
+```powershell
+npm run dev:live
+```
+
+The first live start prints a one-time admin password in the terminal.
+Read START-LIVE.txt in the same folder for the full walkthrough.
+---
+
+## Part 1 - Real email (Gmail SMTP)
+
+### What you need
+- Your Gmail address (the pilot test recipient is your-test-account@gmail.com)
+- A **Gmail App Password**. This is NOT your normal password.
+
+### Step 1 - Create the App Password (on Google's site)
+1. Go to myaccount.google.com - Security.
+2. Turn ON 2-Step Verification if it is off (required for App Passwords).
+3. Search "App passwords" in the settings search box, or go to
+   myaccount.google.com/apppasswords
+4. Create one named "vidyavarta". Google shows a 16-character password like
+   abcd efgh ijkl mnop.
+5. Copy it. **Never type this password into the chat, a screenshot, or the
+   audit hive. It stays in your local .env only.**
+
+### Step 2 - Create the .env file (NEW: the app reads it automatically)
+
+Create a file named exactly `.env` (no .txt ending - in Notepad use
+File - Save As - Save as type: All Files) in the SOURCE folder, next to
+package.json, with this content:
+
+```
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_USER=your-test-account@gmail.com
+SMTP_PASS=your-16-character-app-password
+SMTP_FROM=your-test-account@gmail.com
+SMTP_ALLOWLIST=your-test-account@gmail.com
+SMTP_REQUIRE_TLS=1
+```
+
+Then just: `npm run dev:live` (live is the only mode since Version 1 -
+there is no demo switch anywhere).
+
+(The older way - `$env:NAME="value"` in PowerShell - also works, but only
+for that one terminal window. The .env file is easier and permanent.)
+
+Notes:
+- Allowlist entries that contain @ are EXACT addresses. A bare domain (like
+  @example.invalid) allows that whole domain - handy for test data only.
+- Anything not in the allowlist is blocked BEFORE a connection is opened.
+- Port 465 = implicit TLS. Use 587 only if your provider demands STARTTLS.
+
+### Step 3 - Send the first test
+1. Open the app (live mode), sign in as admin.
+2. Sidebar - Integrations - "Send one test email to this address" with your
+   Gmail address.
+3. Check the Gmail inbox. The mail is branded and labeled UNOFFICIAL STUDENT
+   PROJECT - keep that label; it is honest.
+
+### What the receipts mean (say this in your viva)
+- queued = accepted by VidyaVarta, not yet on the wire
+- sent   = the SMTP server ACCEPTED the message (not proof of reading)
+- failed = server refused; VidyaVarta retries 3 times with backoff, then
+          raises an approval card asking the operator for help
+
+---
+
+NOTE - accounts in live mode: the first start prints a one-time admin
+password in the terminal and saves a copy to data\admin-password.txt.
+Sign in as the operator, then use the TEAM ACCOUNTS button (bottom left of
+the sidebar) to create the teacher accounts, and SWITCH ACCOUNT to sign in
+as a teacher before connecting their Google account.
+
+## Part 2 - Google Classroom API
+
+Classroom writes need Google's permission system, because the app will post
+REAL assignments into a REAL classroom. This is 15 minutes of clicking.
+
+### Step 1 - Create the Google Cloud project (free)
+1. Go to console.cloud.google.com - sign in with your Gmail.
+2. Top bar - Create Project - name it "vidyavarta-pilot" - Create.
+3. Make sure that project is selected (top bar).
+
+### Step 2 - Enable the Classroom API
+1. Left menu - APIs and Services - Library.
+2. Search "Google Classroom API" - Open - Enable.
+
+### Step 3 - Configure the OAuth consent screen
+1. APIs and Services - OAuth consent screen.
+2. User type: External - Create.
+3. App name: VidyaVarta pilot. Add your Gmail as developer contact.
+4. Scopes: you can skip adding manually (the app requests exactly these):
+   - classroom.courses.readonly
+   - classroom.rosters.readonly
+   - classroom.announcements
+   - classroom.courseworkmaterials
+   - classroom.topics
+   - classroom.coursework.students
+5. Test users: ADD EVERY GOOGLE ACCOUNT you will sign in with (your Gmail,
+   plus any test teacher/student Gmails you control). While the app is in
+   Testing, only these accounts can authorize it. Google will show an
+   "unverified app" warning - that is normal for a student pilot; click
+   Advanced - Continue.
+
+### Step 4 - Create the OAuth client
+1. APIs and Services - Credentials - Create credentials - OAuth client ID.
+2. Application type: Web application.
+3. Authorized redirect URIs - add EXACTLY:
+   http://127.0.0.1:4318/oauth/callback
+4. Create. Copy the Client ID and Client secret.
+
+### Step 5 - Configure and run live
+
+Add these lines to the SAME .env file from Part 1 (one combined file):
+
+```
+# 32-byte hex key that encrypts stored Google refresh tokens. Generate once with:
+#   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+CAMPUS_SECRET_KEY=paste-the-generated-here
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-client-secret
+GOOGLE_REDIRECT_URI=http://127.0.0.1:4318/oauth/callback
+```
+
+Then: `npm run dev:live`
+
+### Step 6 - Connect a teacher account and map a real course
+1. In the app: Integrations - "Authorize Google account" - choose the
+   teacher - sign in with a Google account that is a TEACHER in a real
+   (or test) Classroom - accept the scopes.
+2. Find the Classroom course ID: open classroom.google.com, open the class,
+   the address bar shows .../c/1234567890 - that number is the ID.
+3. Back in Integrations - "Map a real course" - pick the local course
+   (e.g. Database Management Systems) and paste the ID - Save.
+
+### Step 7 - The gate still applies (this is the point)
+Post an assignment through the Faculty workbench. Because it is
+grade-bearing, VidyaVarta will NOT send it until the teacher approves the
+EXACT payload in the Ask-me queue. Approval is single-use: executing twice
+is refused. In live mode the approved item then appears in the real
+Classroom, once, traceable to its approval row in the audit.
+
+### Testing with students (ethics)
+- Create a TEST classroom, not a real section.
+- Invite 1-2 Gmail accounts you control as students.
+- Add those same accounts as Test users in the OAuth consent screen.
+- Never point the pilot at real students without the department's consent.
+
+---
+
+## How to KNOW you are in live mode (30-second check)
+
+After `npm run dev`, look at the running app:
+
+1. The top bar shows the LIVE - LOCAL tag.
+2. Integrations - the SMTP button must say "Send one test email to this
+   address". If the SMTP card says "Needs setup", your .env was not picked
+   up (wrong folder? .env.txt ending?).
+3. Integrations - the configuration checklist shows your real .env status.
+
+The startup terminal prints  mode: LIVE . Anything else, stop, fix
+.env, start again.
+
+---
+
+## Part 3 - Troubleshooting
+
+| Symptom | Cause and fix |
+|---|---|
+| Username/password error on Gmail | You used your normal password. You must use the 16-character App Password. |
+| SMTP 535 or auth failed | App Password removed or 2-Step Verification off. Recreate it. |
+| "Recipient not in SMTP_ALLOWLIST" | Add the exact recipient address to SMTP_ALLOWLIST. This block is intentional. |
+| ETIMEDOUT / ECONNREFUSED | College Wi-Fi often blocks port 465/587. Use your phone hotspot to test. |
+| Google "access_blocked: app not verified" | You skipped adding the account as a Test user. Add it in the consent screen. |
+| Google redirect_uri_mismatch | The redirect URI in Cloud Console must be exactly http://127.0.0.1:4318/oauth/callback |
+| 401 Google token expired or revoked | Reconnect the teacher from the Integrations page. |
+| Live mode refuses to start | Live mode must stay on loopback. Do not use --host 0.0.0.0 in live mode. |
+| Settings seem ignored | The .env file is not next to package.json, or Notepad saved it as .env.txt. Check with: dir .env |
+| You have an older double-click package and want live mode | Use the VidyaVarta source folder (this guide) for live mode. |
+
+## Safety rules (do not skip)
+1. Secrets live ONLY in your local terminal session or a local .env file.
+   Never in chat, screenshots, GitHub, or the data folder exports.
+2. The evidence export and audit never contain your SMTP password or Google
+   secrets - that is by design; keep it that way.
+3. The allowlist is the feature that stops a test from becoming an accident.
+   Do not wildcard it to @gmail.com.
+4. Live mode touches real accounts. For any demonstration, use test
+   accounts and consenting recipients only.
+
+---
+
+## Quick checklist
+
+Email:      [ ] App Password created      [ ] env vars set   [ ] test mail received
+Classroom:  [ ] API enabled               [ ] consent + test users
+            [ ] OAuth client + redirect   [ ] env vars set
+            [ ] teacher connected         [ ] course mapped
+            [ ] gated assignment posted once, approved once, visible in Classroom

@@ -1,0 +1,34 @@
+VIDYAVARTA - ONE FILE, TWO PARTS
+================================
+
+PART 1 - THE READY RUNTIME (this folder, LIVE mode)
+---------------------------------------------------
+1. Put your .env next to launcher.cjs (see START-HERE.md - one secret key
+   is enough to start; CAMPUS_ADMIN_PASSWORD sets your first password).
+2. Double-click  START-VIDYAVARTA.cmd
+3. The browser opens. First sign-in:  admin / <your initial password>
+   (printed in the launcher window and saved to data\admin-password.txt)
+
+If double-click does nothing: right-click START-VIDYAVARTA.cmd ->
+Properties -> tick Unblock -> OK. Then double-click again.
+Still stuck? Double-click CHECK-SETUP.cmd and read/share its output.
+
+IMPORTANT: npm commands do not work in this outer folder. If you ran
+"npm run dev:live" here and saw "Missing script", that is why.
+
+
+PART 2 - THE LIVE PROJECT (developer-source folder)
+---------------------------------------------------
+cd developer-source
+then open START-LIVE.txt (notepad START-LIVE.txt) and follow it.
+
+That is where you develop; it runs on your existing Node.js 24.
+
+
+EVERYTHING ELSE
+---------------
+START-HERE.md ........ full setup guide (env keys, first steps)
+START-LIVE.txt ....... also inside developer-source
+LIVE-SETUP.txt ....... email + Google Classroom setup
+VERIFIED.txt ......... what was tested in this build
+CHECK-SETUP.cmd ...... diagnoses any startup problem

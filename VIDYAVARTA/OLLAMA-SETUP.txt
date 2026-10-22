@@ -1,0 +1,91 @@
+VIDYAVARTA - THE LOCAL AI BRAIN (OLLAMA) - WINDOWS SETUP
+=========================================================
+
+What is this?
+-------------
+VidyaVarta now has an optional "brain": Ollama, a free program that
+runs an AI model on YOUR OWN laptop. Nothing is uploaded, no API key,
+no subscription, no internet needed after the one-time download.
+
+With the brain connected:
+  - Scribe (faculty workbench) writes real drafts from natural
+    language, instead of the built-in templates.
+  - The Circular watcher can turn the latest official circular into
+    a ready campus notice with one click ("Brain-draft from latest
+    circular").
+Without it, everything still works - the built-in template engine
+takes over. The brain only DRAFTS. Every send still needs a human
+approval in the Ask-me queue. That never changes.
+
+
+ONE-TIME INSTALL (about 10 minutes)
+-----------------------------------
+Step 1  Download the Windows installer:
+        https://ollama.com/download
+        Run "OllamaSetup.exe". When finished, you will see a small
+        llama icon in the taskbar corner (near the clock).
+        If you do not see it: Start menu > type "Ollama" > open it.
+
+Step 2  Download a model (one time, about 2 GB):
+        Open Command Prompt (Start menu > type cmd) and run:
+
+            ollama pull llama3.2:3b
+
+        Wait until it says "success". Check with:
+
+            ollama list
+
+Step 3  Make sure Ollama is running (llama icon in taskbar), then
+        start VidyaVarta the usual way:
+
+            npm run dev:live
+
+Step 4  How to KNOW the brain is connected:
+        - Open the INTEGRATIONS page.
+        - The "Ollama brain" card must say: Connected - llama3.2:3b
+        - On the Faculty workbench, under the command box, it now
+          says: "Ollama brain - llama3.2:3b - drafts need approval".
+        If it says "Not reachable", click the card and press
+        "Recheck now".
+
+
+TRY IT (2 MINUTES)
+------------------
+1. Sign in as a faculty account. Open Faculty workbench.
+2. Type: "Create a 20 points assignment on SQL joins due 2026-08-10"
+3. Press "Prepare draft". The draft now comes from the brain, and the
+   editor says "Drafted by the Ollama brain."
+4. Read every field, then press "Request approval". The approval gate
+   is exactly the same as before.
+
+
+CIRCULAR TO NOTICE (THE WATCHER LOOP)
+-------------------------------------
+1. Open Circular watcher. Press "Scan circulars" or wait for a scan.
+2. Press "Brain-draft from latest circular" (top right).
+3. The composer opens with a drafted title and body from the brain.
+4. Choose the audience and channels, then create it - it goes to the
+   normal approval queue. Nothing is sent by itself.
+
+
+IF SOMETHING DOES NOT WORK
+--------------------------
+"Ollama is not reachable"  -> Is the llama icon in the taskbar? Open
+                              the Ollama app once, then Recheck.
+"model is missing"         -> Run: ollama pull llama3.2:3b
+First draft is slow        -> The first draft after start loads the
+                              model into memory; it can take up to a
+                              minute on a laptop. Later drafts are
+                              faster.
+Want a different model?    -> In .env set, for example:
+                              OLLAMA_MODEL=qwen2.5:3b
+                              (then restart npm run dev:live)
+
+
+PRIVACY AND SAFETY
+------------------
+- The model runs on 127.0.0.1 (your laptop only). No cloud calls.
+- Student data is never sent to the model. Only the text you type
+  and the circular title are used to make a draft.
+- The brain cannot send anything. Approvals, allowlists and audit
+  logs apply to every action, with or without the brain.

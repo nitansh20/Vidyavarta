@@ -1,0 +1,17 @@
+export type Role = 'operator' | 'teacher' | 'leadership' | 'viewer';
+export type Agent = 'Michael' | 'Watcher' | 'Scribe' | 'Composer' | 'Courier' | 'System';
+export interface Actor { agent: Agent; behalf: string; human?: boolean; role?: Role }
+export interface Student { id: string; name: string; email: string; college: string; branch: 'CSE' | 'IT'; year: number; section: 'A' | 'B' }
+export interface Audience { branch: 'CSE' | 'IT' | 'ALL'; year: number | null; sections: string[] }
+export interface Notice { id: string; title: string; body: string; audience: Audience; urgency: 'normal' | 'critical'; deadline: string | null; status: 'draft' | 'pending' | 'published' | 'rejected'; channels: ('board' | 'email')[]; createdAt: string; publishedAt?: string; approvalId?: string; sourceUrl?: string; recipientCount?: number }
+export interface Approval { id: string; title: string; reason: string; role: Role; teacherId?: string; kind: 'notice' | 'classroom' | 'question' | 'error'; resourceId: string; fingerprint: string; status: 'pending' | 'approved' | 'rejected' | 'consumed'; createdAt: string; resolvedAt?: string; resolvedBy?: string; payload?: ClassroomAction }
+export interface Course { id: string; name: string; teacherId: string; teacher: string; segment: string; topic: string; liveId?: string; faq: Record<string,string> }
+export interface ClassroomAction { courseId: string; kind: 'announcement' | 'material' | 'assignment' | 'topic'; title: string; body: string; points?: number; dueDate?: string; links?: string[]; topic?: string }
+export interface ClassroomPost extends ClassroomAction { id: string; status: 'posted' | 'pending' | 'failed'; createdAt: string; approvalId?: string; externalId?: string }
+export interface WatchSource { id: string; name: string; url: string; type: 'live' | 'fixture'; enabled: boolean; intervalMinutes: number; lastScan: string | null; lastHash: string | null; status: 'ready' | 'healthy' | 'error'; error?: string; items: WatchItem[] }
+export interface WatchItem { title: string; url: string; hash: string; date?: string }
+export interface WatchEvent { id: string; sourceId: string; title: string; url: string; change: 'new' | 'changed'; category: 'fee' | 'exam' | 'academic' | 'general'; urgency: 'normal' | 'critical'; detectedAt: string; noticeId: string; date?: string }
+export interface Receipt { id: string; noticeId: string; channel: 'email' | 'board'; recipient: string; status: 'published' | 'queued' | 'sent' | 'accepted' | 'failed' | 'blocked'; at: string; attempts: number; error?: string; retryAt?: string; messageId?: string }
+export interface Audit { id: number; at: string; agent: Agent; behalf: string; action: string; resourceId: string; detail: string; prevHash: string; hash: string }
+export interface Reminder { id: string; noticeId: string; daysBefore: number; at: string; status: 'scheduled' | 'ready' | 'cancelled'; approvalId?: string }
+export interface Snapshot { now: string; students: Student[]; courses: Course[]; notices: Notice[]; approvals: Approval[]; sources: WatchSource[]; events: WatchEvent[]; receipts: Receipt[]; posts: ClassroomPost[]; audit: Audit[]; reminders: Reminder[]; integrations: { classroom: boolean; smtp: boolean; broker: boolean; smtpMissing: string[]; classroomMissing: string[]; ollama: { configured: boolean; model: string; host: string; available: boolean; checkedAt: string | null; error: string | null } | null }; digest: { published: number; recipients: number; pending: number; failed: number; } }
